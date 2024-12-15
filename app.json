@@ -12,9 +12,7 @@
       "supportsTablet": true,
       "bundleIdentifier": "com.anonymous.RoadAware",
       "infoPlist": {
-        "UIBackgroundModes": ["location", "fetch"],
-        "NSLocationAlwaysUsageDescription": "We need your location to track your whereabouts and provide location-based features.",
-        "NSLocationWhenInUseUsageDescription": "We need your location to provide location-based features."
+        "UIBackgroundModes": ["location", "fetch"]
       }
     },
     "android": {
