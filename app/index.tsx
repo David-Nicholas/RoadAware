@@ -8,20 +8,20 @@ import CardTolls from "@/components/CardTolls";
 import { ThemeContext } from "../context/ThemeContext";
 import Colors from "../constants/Colors";
 import { useLocation } from "../context/LocationContext";
-import { useCountryInfo } from "../context/CountryInfoContext"; // Import your CountryInfoContext
+import { useCountryInfo } from "../context/CountryInfoContext"; 
 
 export default function Index() {
   const { theme } = useContext(ThemeContext);
   const themeColors = Colors[theme];
   const router = useRouter();
   const { country, error } = useLocation();
-  const { data, loading } = useCountryInfo(); // Use the countryInfo from the context
+  const { data, loading } = useCountryInfo();
   const insets = useSafeAreaInsets();
   const [tollsUrl, setTollsUrl] = useState<any>(null);
 
   useEffect(() => {
     if (data && data.tolls) {
-      setTollsUrl(data.tolls); // Set the tolls URL from the API response
+      setTollsUrl(data.tolls); 
     }
   }, [data]);
 
