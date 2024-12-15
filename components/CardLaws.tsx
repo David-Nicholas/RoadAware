@@ -1,22 +1,18 @@
 import React from "react";
-import { View, Text, Switch, StyleSheet } from "react-native";
+import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
 import Colors from "../constants/Colors";
 import { useContext } from "react";
 import { ThemeContext } from "../context/ThemeContext";
 
-interface CardSwitchProps {
+interface CardInfoProps {
   title: string;
-  description: string;
-  value: boolean; 
-  onValueChange: (value: boolean) => void; 
+  value: string;
 }
 
-export default function CardSwitch({
+export default function CardLaws({
   title,
-  description,
   value,
-  onValueChange,
-}: CardSwitchProps) {
+}: CardInfoProps) {
   const { theme } = useContext(ThemeContext);
   const themeColors = Colors[theme];
 
@@ -30,18 +26,9 @@ export default function CardSwitch({
       <View style={styles.textContainer}>
         <Text style={[styles.title, { color: themeColors.text }]}>{title}</Text>
         <Text style={[styles.description, { color: themeColors.text }]}>
-          {description}
+          {value}
         </Text>
       </View>
-      <Switch
-        value={value}
-        onValueChange={onValueChange}
-        thumbColor={themeColors.text}
-        trackColor={{
-          false: themeColors.secondary,
-          true: themeColors.secondary,
-        }}
-      />
     </View>
   );
 }

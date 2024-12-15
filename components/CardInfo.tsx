@@ -1,31 +1,32 @@
 import React from "react";
-import { View, Text, Switch, StyleSheet } from "react-native";
+import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
 import Colors from "../constants/Colors";
 import { useContext } from "react";
 import { ThemeContext } from "../context/ThemeContext";
+import { useRouter } from "expo-router";
 
-interface CardSwitchProps {
+interface CardInfoProps {
   title: string;
   description: string;
-  value: boolean; 
-  onValueChange: (value: boolean) => void; 
+  onPress: () => void; 
 }
 
-export default function CardSwitch({
+export default function CardInfo({
   title,
   description,
-  value,
-  onValueChange,
-}: CardSwitchProps) {
+  onPress,
+}: CardInfoProps) {
   const { theme } = useContext(ThemeContext);
   const themeColors = Colors[theme];
+  const router = useRouter(); 
 
   return (
-    <View
+    <TouchableOpacity
       style={[
         styles.card,
         { borderColor: themeColors.primary, backgroundColor: themeColors.background },
       ]}
+      onPress={onPress} 
     >
       <View style={styles.textContainer}>
         <Text style={[styles.title, { color: themeColors.text }]}>{title}</Text>
@@ -33,16 +34,7 @@ export default function CardSwitch({
           {description}
         </Text>
       </View>
-      <Switch
-        value={value}
-        onValueChange={onValueChange}
-        thumbColor={themeColors.text}
-        trackColor={{
-          false: themeColors.secondary,
-          true: themeColors.secondary,
-        }}
-      />
-    </View>
+    </TouchableOpacity>
   );
 }
 
