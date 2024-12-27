@@ -38,10 +38,10 @@ export default function CardContacts({
         <Text style={[styles.description, { color: textColor }]}>{value}</Text>
       </View>
       <TouchableOpacity
-        style={[styles.callButton, { backgroundColor: textColor }]}
+        style={[styles.callButton, { backgroundColor: backgroundColor }]}
         onPress={handleCallPress}
       >
-        <Text style={[styles.callButtonText, { color: backgroundColor }]}>
+        <Text style={[styles.callButtonText, { color: textColor }]}>
           Call
         </Text>
       </TouchableOpacity>
