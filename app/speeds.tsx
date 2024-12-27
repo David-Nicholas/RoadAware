@@ -1,12 +1,12 @@
 import React, { useContext, useEffect, useState } from "react";
-import { View, StyleSheet, Text } from "react-native";
+import { View, StyleSheet, Text, ScrollView } from "react-native";
 import { useRouter } from "expo-router";
 import { ThemeContext } from "../context/ThemeContext";
 import Colors from "../constants/Colors";
 import { AntDesign } from "@expo/vector-icons";
 import { TouchableOpacity } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useCountryInfo } from "../context/CountryInfoContext"; 
+import { useCountryInfo } from "../context/CountryInfoContext";
 import CardSpeeds from "../components/CardSpeeds";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
@@ -15,7 +15,7 @@ export default function Speeds() {
     const themeColors = Colors[theme];
     const router = useRouter();
     const insets = useSafeAreaInsets();
-    const { data, loading, error } = useCountryInfo(); 
+    const { data, loading, error } = useCountryInfo();
 
     const [speedsData, setSpeedsData] = useState<any>(null);
     const [offline, setOffline] = useState<boolean>(false);
@@ -88,13 +88,30 @@ export default function Speeds() {
             </TouchableOpacity>
 
             <View style={styles.content}>
-                {speedsData && Object.keys(speedsData).map((roadType) => (
-                    <CardSpeeds
-                        key={roadType}
-                        title={roadType}
-                        value={speedsData[roadType]}
-                    />
-                ))}
+                <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+                    {speedsData &&
+                        Object.keys(speedsData)
+                            .sort() // Sort vehicle types alphabetically
+                            .map((vehicleType) => (
+                                <View key={vehicleType} style={styles.vehicleSection}>
+                                    <Text
+                                        style={[
+                                            styles.vehicleType,
+                                            { color: themeColors.text },
+                                        ]}
+                                    >
+                                        {vehicleType}
+                                    </Text>
+                                    {Object.keys(speedsData[vehicleType]).map((roadType) => (
+                                        <CardSpeeds
+                                            key={roadType}
+                                            title={`${roadType}`}
+                                            value={speedsData[vehicleType][roadType]}
+                                        />
+                                    ))}
+                                </View>
+                            ))}
+                </ScrollView>
             </View>
         </View>
     );
@@ -112,6 +129,18 @@ const styles = StyleSheet.create({
     content: {
         flex: 1,
         justifyContent: "flex-start",
-        marginTop: 60, 
+        marginTop: 60,
+    },
+    vehicleSection: {
+        marginBottom: 20,
+    },
+    vehicleType: {
+        fontSize: 18,
+        fontWeight: "bold",
+        marginBottom: 10,
+    },
+    scrollContent: {
+        flexGrow: 1,
+        paddingBottom: 20,
     },
 });
