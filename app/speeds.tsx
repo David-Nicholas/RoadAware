@@ -91,7 +91,7 @@ export default function Speeds() {
                 <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
                     {speedsData &&
                         Object.keys(speedsData)
-                            .sort() // Sort vehicle types alphabetically
+                            .sort() 
                             .map((vehicleType) => (
                                 <View key={vehicleType} style={styles.vehicleSection}>
                                     <Text

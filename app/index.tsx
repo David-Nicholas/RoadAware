@@ -218,7 +218,7 @@ export default function Index() {
           description="Quick and easy tool to convert currencies, providing real-time exchange rates to assist with travel budgeting and transactions."
           onPress={() => router.push("/convertor")}
         />
-        {(tollsUrl) && (offline === "off") && (
+        {(tollsUrl != "No tolls") && (offline === "off") && (
           <CardTolls
             title="Tolls"
             description="Website where you can find informations about the tolls in this country"
