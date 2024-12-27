@@ -16,7 +16,6 @@ export default function CardSpeeds({
   const { theme } = useContext(ThemeContext);
   const themeColors = Colors[theme];
 
-  // Map speed values to corresponding images
   const speedImages: Record<string, any> = {
     "10": require("../assets/signs/10-removebg-preview.png"),
     "20": require("../assets/signs/20-removebg-preview.png"),
