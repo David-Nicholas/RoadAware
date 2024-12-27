@@ -8,7 +8,8 @@ import { TouchableOpacity } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useCountryInfo } from "../context/CountryInfoContext"; 
 import CardLaws from "../components/CardLaws";
-import CardNestedLaws from "../components/CardNestedLaws"; 
+import CardNestedLaws from "../components/CardNestedLaws";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export default function Laws() {
     const { theme } = useContext(ThemeContext);
@@ -16,14 +17,36 @@ export default function Laws() {
     const router = useRouter();
     const insets = useSafeAreaInsets();
     const { data, loading, error } = useCountryInfo();
-
     const [lawsData, setLawsData] = useState<any>(null);
+    const [offline, setOffline] = useState<boolean>(false); 
 
     useEffect(() => {
-        if (data && data.laws) {
+       
+        const checkOfflineStatus = async () => {
+            const isOffline = !(await navigator.onLine);
+            setOffline(isOffline);
+        };
+
+        checkOfflineStatus();
+    }, []);
+
+    useEffect(() => {
+        if (offline) {
+            const loadOfflineData = async () => {
+                const savedCountryInfo = await AsyncStorage.getItem("selectedCountryInfo");
+                if (savedCountryInfo) {
+                    const countryInfo = JSON.parse(savedCountryInfo);
+                    if (countryInfo && countryInfo.laws) {
+                        setLawsData(countryInfo.laws);
+                    }
+                }
+            };
+
+            loadOfflineData();
+        } else if (data && data.laws) {
             setLawsData(data.laws);
         }
-    }, [data]); 
+    }, [offline, data]);
 
     if (loading) {
         return (
@@ -58,7 +81,6 @@ export default function Laws() {
                 { backgroundColor: themeColors.background, paddingTop: insets.top },
             ]}
         >
-
             <TouchableOpacity
                 style={[styles.iconContainer, { top: insets.top + 16 }]}
                 onPress={() => router.push("/")}
@@ -82,7 +104,6 @@ export default function Laws() {
                                 );
                             }
 
-
                             return (
                                 <CardLaws
                                     key={lawKey}
@@ -93,7 +114,6 @@ export default function Laws() {
                         })}
                 </ScrollView>
             </View>
-
         </View>
     );
 }

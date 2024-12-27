@@ -8,6 +8,7 @@ import { TouchableOpacity } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useCountryInfo } from "../context/CountryInfoContext"; 
 import CardSpeeds from "../components/CardSpeeds";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export default function Speeds() {
     const { theme } = useContext(ThemeContext);
@@ -16,16 +17,36 @@ export default function Speeds() {
     const insets = useSafeAreaInsets();
     const { data, loading, error } = useCountryInfo(); 
 
-    
     const [speedsData, setSpeedsData] = useState<any>(null);
+    const [offline, setOffline] = useState<boolean>(false);
 
     useEffect(() => {
-        if (data && data.speeds) {
+        const checkOfflineStatus = async () => {
+            const isOffline = !(await navigator.onLine);
+            setOffline(isOffline);
+        };
+
+        checkOfflineStatus();
+    }, []);
+
+    useEffect(() => {
+        if (offline) {
+            const loadOfflineData = async () => {
+                const savedCountryInfo = await AsyncStorage.getItem("selectedCountryInfo");
+                if (savedCountryInfo) {
+                    const countryInfo = JSON.parse(savedCountryInfo);
+                    if (countryInfo && countryInfo.speeds) {
+                        setSpeedsData(countryInfo.speeds);
+                    }
+                }
+            };
+
+            loadOfflineData();
+        } else if (data && data.speeds) {
             setSpeedsData(data.speeds);
         }
-    }, [data]); 
+    }, [offline, data]);
 
-    
     if (loading) {
         return (
             <View
@@ -59,7 +80,6 @@ export default function Speeds() {
                 { backgroundColor: themeColors.background, paddingTop: insets.top },
             ]}
         >
-            
             <TouchableOpacity
                 style={[styles.iconContainer, { top: insets.top + 16 }]}
                 onPress={() => router.push("/")}
@@ -67,7 +87,6 @@ export default function Speeds() {
                 <AntDesign name="closecircleo" size={24} color={themeColors.text} />
             </TouchableOpacity>
 
-            
             <View style={styles.content}>
                 {speedsData && Object.keys(speedsData).map((roadType) => (
                     <CardSpeeds

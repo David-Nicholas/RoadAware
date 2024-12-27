@@ -1,18 +1,102 @@
-import { View, StyleSheet } from "react-native";
-import { useContext } from "react";
+import React, { useContext, useState, useEffect } from "react";
+import { View, StyleSheet, Text, TouchableOpacity, Button } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useRouter } from "expo-router";
+import CardSwitch from "../components/CardSwitch";
 import { ThemeContext } from "../context/ThemeContext";
 import Colors from "../constants/Colors";
-import CardSwitch from "../components/CardSwitch";
-import { AntDesign } from "@expo/vector-icons";
-import { TouchableOpacity } from "react-native";
-import { useRouter } from "expo-router";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { OfflineContext } from "../context/OfflineContext";
+import DropDownPicker from "react-native-dropdown-picker";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { countries } from "../constants/Countries";
+import { AntDesign, FontAwesome, MaterialIcons } from "@expo/vector-icons";
+
+const API_URL = process.env.EXPO_PUBLIC_API_COUNTRY_INFO;
+const API_CURRENCY = process.env.EXPO_PUBLIC_API_CURRENCY_RATES;
+const API_KEY = process.env.EXPO_PUBLIC_API_CURRENCY_KEY;
 
 export default function Settings() {
     const { theme, toggleTheme } = useContext(ThemeContext);
+    const { offline, toggleOffline } = useContext(OfflineContext);
     const themeColors = Colors[theme];
     const router = useRouter();
     const insets = useSafeAreaInsets();
+
+    const [selectedCountries, setSelectedCountries] = useState<string[]>([]);
+    const [open, setOpen] = useState(false);
+    const [dropdownItems, setDropdownItems] = useState(
+        countries.map((country) => ({ label: country, value: country }))
+    );
+
+    const CustomArrowDownIcon = ({ style }: { style: any }) => (
+        <MaterialIcons name="keyboard-arrow-down" size={24} color={themeColors.primary} style={style} />
+    );
+
+    const CustomArrowUpIcon = ({ style }: { style: any }) => (
+        <MaterialIcons name="keyboard-arrow-up" size={24} color={themeColors.primary} style={style} />
+    );
+
+    const CustomTickIcon = ({ style }: { style: any }) => (
+        <FontAwesome name="check" size={20} color={themeColors.primary} style={style} />
+    );
+
+    useEffect(() => {
+        const loadSelectedCountries = async () => {
+            const storedCountries = await AsyncStorage.getItem("selectedCountriesList");
+            if (storedCountries) {
+                setSelectedCountries(JSON.parse(storedCountries));
+            }
+        };
+        loadSelectedCountries();
+    }, []);
+
+    useEffect(() => {
+        if (offline === "off") {
+            setSelectedCountries([]);
+            AsyncStorage.removeItem("selectedCountriesList");
+            console.log("Delete select counties list");
+            AsyncStorage.removeItem("selectedCountriesInformations");
+            console.log("Delete select counties informations");
+            AsyncStorage.removeItem("currencyRates");
+            console.log("Delete currency rates");
+        }
+    }, [offline]);
+
+    const handleSaveCountries = async () => {
+        try {
+            await AsyncStorage.setItem("selectedCountriesList", JSON.stringify(selectedCountries));
+            alert("Countries saved!");
+            console.log("Selected countries:", selectedCountries);
+
+            const countriesParam = encodeURIComponent(JSON.stringify(selectedCountries)); 
+            const response = await fetch(`${API_URL}/countries?names=${countriesParam}`);
+            if (!response.ok) {
+                throw new Error(`Error fetching country info: ${response.statusText}`);
+            }
+            const countryInfo = await response.json();
+            console.log("Fetched country information:", countryInfo);
+
+            await AsyncStorage.setItem("selectedCountriesInformations", JSON.stringify(countryInfo, null));
+    
+            alert("Country information saved!");
+
+            const url = `${API_CURRENCY}?apiKey=${API_KEY}&base=EUR&resolution=1m&amount=1&places=6&format=json`;
+            const responseCurrency = await fetch(url, { method: "GET" });
+            if (!responseCurrency.ok) {
+                throw new Error(`Error fetching currency conversion rates: ${responseCurrency.statusText}`);
+            }
+
+            const currencyData = await responseCurrency.json();
+            await AsyncStorage.setItem("currencyRates", JSON.stringify(currencyData.rates));
+            alert("Currency rates saved!");
+        } catch (error) {
+            console.error("Failed to save countries, fetch country info, or fetch currency conversion rates:", error);
+            alert("Failed to save countries, fetch information, or fetch currency rates.");
+        }
+    };
+    
+    
+    
 
     return (
         <View
@@ -35,6 +119,51 @@ export default function Settings() {
                     value={theme === "dark"}
                     onValueChange={toggleTheme}
                 />
+
+                <CardSwitch
+                    title="Offline"
+                    description="Enable offline mode to store country data."
+                    value={offline === "on"}
+                    onValueChange={toggleOffline}
+                />
+
+                {offline === "on" && (
+                    <View>
+                        <TouchableOpacity
+                            style={[
+                                styles.saveButton,
+                                { borderColor: themeColors.primary, backgroundColor: themeColors.background },
+                            ]}
+                            onPress={handleSaveCountries}
+                        >
+                            <Text
+                                style={[
+                                    styles.saveButtonText,
+                                    { color: themeColors.primary },
+                                ]}
+                            >
+                                Save Countries
+                            </Text>
+                        </TouchableOpacity>
+                        <DropDownPicker
+                            open={open}
+                            setOpen={setOpen}
+                            value={selectedCountries}
+                            setValue={setSelectedCountries}
+                            items={dropdownItems}
+                            setItems={setDropdownItems}
+                            multiple={true}
+                            placeholder="Select countries"
+                            style={[styles.dropdown, { backgroundColor: themeColors.background, borderColor: themeColors.primary }]}
+                            dropDownContainerStyle={{ backgroundColor: themeColors.background, borderColor: themeColors.primary }}
+                            selectedItemContainerStyle={{ backgroundColor: themeColors.secondary }}
+                            ArrowDownIconComponent={CustomArrowDownIcon}
+                            ArrowUpIconComponent={CustomArrowUpIcon}
+                            TickIconComponent={CustomTickIcon}
+                            textStyle={{ color: themeColors.primary }}
+                        />
+                    </View>
+                )}
             </View>
         </View>
     );
@@ -53,5 +182,25 @@ const styles = StyleSheet.create({
         flex: 1,
         justifyContent: "flex-start",
         marginTop: 60,
+    },
+    dropdown: {
+        marginTop: 16,
+        marginVertical: 8,
+        borderRadius: 8,
+        borderWidth: 1,
+        paddingHorizontal: 8,
+    },
+    saveButton: {
+        marginTop: 16,
+        paddingVertical: 12,
+        paddingHorizontal: 20,
+        borderRadius: 8,
+        borderWidth: 1,
+        alignItems: "center",
+        justifyContent: "center",
+    },
+    saveButtonText: {
+        fontSize: 16,
+        fontWeight: "bold",
     },
 });
