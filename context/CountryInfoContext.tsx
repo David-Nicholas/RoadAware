@@ -39,23 +39,27 @@ export const CountryInfoProvider: React.FC<{ children: React.ReactNode }> = ({ c
     const [error, setError] = useState<string | null>(null);
     const [loading, setLoading] = useState<boolean>(true);
 
-    const { country } = useLocation(); 
+    const { country } = useLocation();
 
     useEffect(() => {
-        if (!country) return; 
+        if (!country) return;
 
         const fetchData = async () => {
             try {
                 const response = await fetch(`${apiUrl}/country?name=${country}`);
                 if (!response.ok) {
                     throw new Error(`Error fetching country info: ${response.statusText}`);
-                  }
+                }
                 const result = await response.json();
 
-                
+                const responseSizeBytes = JSON.stringify(result).length;
+
+                const responseSizeMB = responseSizeBytes / (1024 * 1024);
+
+                console.log("Response Size:", responseSizeMB.toFixed(4), "MB");
+
                 console.log("API Response:", result);
 
-                
                 const parsedData: CountryInfo = {
                     name: result.name,
                     currency: result.currency,

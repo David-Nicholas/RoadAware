@@ -8,6 +8,7 @@ import { TouchableOpacity } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useCountryInfo } from "../context/CountryInfoContext"; 
 import CardContacts from "../components/CardContacts";
+import AsyncStorage from "@react-native-async-storage/async-storage"; // Import AsyncStorage
 
 export default function Contacts() {
     const { theme } = useContext(ThemeContext);
@@ -16,16 +17,36 @@ export default function Contacts() {
     const insets = useSafeAreaInsets();
     const { data, loading, error } = useCountryInfo(); 
 
-    
     const [contactsData, setContactsData] = useState<any>(null);
+    const [offline, setOffline] = useState<boolean>(false);
 
     useEffect(() => {
-        if (data && data.contacts) {
+        const checkOfflineStatus = async () => {
+            const isOffline = !(await navigator.onLine); 
+            setOffline(isOffline);
+        };
+
+        checkOfflineStatus();
+    }, []);
+
+    useEffect(() => {
+        if (offline) {
+            const loadOfflineData = async () => {
+                const savedCountryInfo = await AsyncStorage.getItem("selectedCountryInfo");
+                if (savedCountryInfo) {
+                    const countryInfo = JSON.parse(savedCountryInfo);
+                    if (countryInfo && countryInfo.contacts) {
+                        setContactsData(countryInfo.contacts);
+                    }
+                }
+            };
+
+            loadOfflineData();
+        } else if (data && data.contacts) {
             setContactsData(data.contacts);
         }
-    }, [data]); 
+    }, [offline, data]);
 
-    
     if (loading) {
         return (
             <View
@@ -59,7 +80,6 @@ export default function Contacts() {
                 { backgroundColor: themeColors.background, paddingTop: insets.top },
             ]}
         >
-            
             <TouchableOpacity
                 style={[styles.iconContainer, { top: insets.top + 16 }]}
                 onPress={() => router.push("/")}
@@ -67,7 +87,6 @@ export default function Contacts() {
                 <AntDesign name="closecircleo" size={24} color={themeColors.text} />
             </TouchableOpacity>
 
-            
             <View style={styles.content}>
                 {contactsData && Object.keys(contactsData).map((roadType) => (
                     <CardContacts
@@ -93,6 +112,6 @@ const styles = StyleSheet.create({
     content: {
         flex: 1,
         justifyContent: "flex-start",
-        marginTop: 60, // Adjust content to avoid overlap with the icon
+        marginTop: 60, 
     },
 });
