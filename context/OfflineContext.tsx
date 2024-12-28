@@ -9,7 +9,7 @@ interface OfflineContextType {
 }
 
 export const OfflineContext = createContext<OfflineContextType>({
-    offline: "off", // Default value
+    offline: "off",
     toggleOffline: () => {},
 });
 
@@ -33,8 +33,8 @@ export const OfflineProvider = ({ children }: { children: ReactNode }) => {
     const toggleOffline = async () => {
         try {
             const newOfflineMode = offline === "off" ? "on" : "off";
-            setOffline(newOfflineMode); // Update state
-            await AsyncStorage.setItem("offlineMode", newOfflineMode); // Persist state
+            setOffline(newOfflineMode);
+            await AsyncStorage.setItem("offlineMode", newOfflineMode);
         } catch (error) {
             console.error("Error toggling offline mode:", error);
         }
