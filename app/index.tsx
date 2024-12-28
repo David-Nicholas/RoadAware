@@ -1,5 +1,5 @@
 import React, { useEffect, useContext, useState } from "react";
-import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from "react-native";
 import { Feather, FontAwesome, MaterialIcons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -14,6 +14,7 @@ import { useLocation } from "../context/LocationContext";
 import { useCountryInfo } from "../context/CountryInfoContext";
 
 export default function Index() {
+
   const CustomArrowDownIcon = ({ style }: { style: any }) => (
     <MaterialIcons name="keyboard-arrow-down" size={24} color={themeColors.primary} style={style} />
   );
@@ -82,7 +83,7 @@ export default function Index() {
       const countryInfo = selectedCountriesInfo.countries.find(
         (c: any) => c.name === selectedCountry
       );
-      
+
       if (countryInfo) {
         AsyncStorage.setItem("selectedCountry", selectedCountry);
         AsyncStorage.setItem("selectedCountryInfo", JSON.stringify(countryInfo));
@@ -194,7 +195,6 @@ export default function Index() {
           </TouchableOpacity>
         </View>
       )}
-
       <View style={[styles.cardsContainer]}>
         <CardInfo
           title="Speeds"
@@ -273,5 +273,18 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     alignItems: "center",
     justifyContent: "center",
+  },
+  accidentMessage: {
+    backgroundColor: "red",
+    padding: 10,
+    marginBottom: 20,
+  },
+  accidentText: {
+    color: "white",
+    fontWeight: "bold",
+  },
+  scrollContent: {
+    flexGrow: 1,
+    paddingBottom: 20,
   },
 });

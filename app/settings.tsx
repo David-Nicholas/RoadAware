@@ -1,11 +1,12 @@
 import React, { useContext, useState, useEffect } from "react";
-import { View, StyleSheet, Text, TouchableOpacity, Button } from "react-native";
+import { View, StyleSheet, Text, TouchableOpacity, Button, TextInput, ScrollView } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import CardSwitch from "../components/CardSwitch";
 import { ThemeContext } from "../context/ThemeContext";
 import Colors from "../constants/Colors";
 import { OfflineContext } from "../context/OfflineContext";
+import { DetectionContext } from "@/context/DetectionContext";
 import DropDownPicker from "react-native-dropdown-picker";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { countries } from "../constants/Countries";
@@ -18,10 +19,12 @@ const API_KEY = process.env.EXPO_PUBLIC_API_CURRENCY_KEY;
 export default function Settings() {
     const { theme, toggleTheme } = useContext(ThemeContext);
     const { offline, toggleOffline } = useContext(OfflineContext);
+    const { detection, toggleDetection } = useContext(DetectionContext);
     const themeColors = Colors[theme];
     const router = useRouter();
     const insets = useSafeAreaInsets();
 
+    const [emergencyPhoneNumber, setEmergencyPhoneNumber] = useState<string>("");
     const [selectedCountries, setSelectedCountries] = useState<string[]>([]);
     const [open, setOpen] = useState(false);
     const [dropdownItems, setDropdownItems] = useState(
@@ -41,12 +44,21 @@ export default function Settings() {
     );
 
     useEffect(() => {
+        const loadEmergencyPhoneNumber = async () => {
+            const storedNumber = await AsyncStorage.getItem("EmergencyPhoneNumber");
+            if (storedNumber) {
+                setEmergencyPhoneNumber(JSON.parse(storedNumber));
+            }
+        };
+
         const loadSelectedCountries = async () => {
             const storedCountries = await AsyncStorage.getItem("selectedCountriesList");
             if (storedCountries) {
                 setSelectedCountries(JSON.parse(storedCountries));
             }
         };
+
+        loadEmergencyPhoneNumber();
         loadSelectedCountries();
     }, []);
 
@@ -62,13 +74,21 @@ export default function Settings() {
         }
     }, [offline]);
 
+    useEffect(() => {
+        if (detection === "off") {
+            setEmergencyPhoneNumber("");
+            AsyncStorage.removeItem("EmergencyPhoneNumber");
+            console.log("Delete emergency number from storage");
+        }
+    }, [detection]);
+
     const handleSaveCountries = async () => {
         try {
             await AsyncStorage.setItem("selectedCountriesList", JSON.stringify(selectedCountries));
             alert("Countries saved!");
             console.log("Selected countries:", selectedCountries);
 
-            const countriesParam = encodeURIComponent(JSON.stringify(selectedCountries)); 
+            const countriesParam = encodeURIComponent(JSON.stringify(selectedCountries));
             const response = await fetch(`${API_URL}/countries?names=${countriesParam}`);
             if (!response.ok) {
                 throw new Error(`Error fetching country info: ${response.statusText}`);
@@ -77,7 +97,7 @@ export default function Settings() {
             console.log("Fetched country information:", countryInfo);
 
             await AsyncStorage.setItem("selectedCountriesInformations", JSON.stringify(countryInfo, null));
-    
+
             alert("Country information saved!");
 
             const url = `${API_CURRENCY}?apiKey=${API_KEY}&base=EUR&resolution=1m&amount=1&places=6&format=json`;
@@ -94,9 +114,17 @@ export default function Settings() {
             alert("Failed to save countries, fetch information, or fetch currency rates.");
         }
     };
-    
-    
-    
+
+    const handleSaveNumber = async () => {
+        try {
+            await AsyncStorage.setItem("EmergencyPhoneNumber", JSON.stringify(emergencyPhoneNumber));
+            alert("Emergency phone number saved!");
+        } catch (error) {
+            console.error("Failed to save emergency phone number in storage: ", error);
+            alert("Failed to save emergency phone number in storage");
+        }
+    };
+
 
     return (
         <View
@@ -113,57 +141,113 @@ export default function Settings() {
             </TouchableOpacity>
 
             <View style={styles.content}>
-                <CardSwitch
-                    title="Theme"
-                    description="Modify the theme to light or dark mode."
-                    value={theme === "dark"}
-                    onValueChange={toggleTheme}
-                />
+                <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+                    <CardSwitch
+                        title="Theme"
+                        description="Modify the theme to light or dark mode."
+                        value={theme === "dark"}
+                        onValueChange={toggleTheme}
+                    />
 
-                <CardSwitch
-                    title="Offline"
-                    description="Enable offline mode to store country data."
-                    value={offline === "on"}
-                    onValueChange={toggleOffline}
-                />
+                    <CardSwitch
+                        title="Accident"
+                        description="Enable accident detection to monitor for potential crashes."
+                        value={detection === "on"}
+                        onValueChange={toggleDetection}
+                    />
 
-                {offline === "on" && (
-                    <View>
-                        <TouchableOpacity
-                            style={[
-                                styles.saveButton,
-                                { borderColor: themeColors.primary, backgroundColor: themeColors.background },
-                            ]}
-                            onPress={handleSaveCountries}
-                        >
-                            <Text
-                                style={[
-                                    styles.saveButtonText,
-                                    { color: themeColors.primary },
-                                ]}
-                            >
-                                Save Countries
-                            </Text>
-                        </TouchableOpacity>
-                        <DropDownPicker
-                            open={open}
-                            setOpen={setOpen}
-                            value={selectedCountries}
-                            setValue={setSelectedCountries}
-                            items={dropdownItems}
-                            setItems={setDropdownItems}
-                            multiple={true}
-                            placeholder="Select countries"
-                            style={[styles.dropdown, { backgroundColor: themeColors.background, borderColor: themeColors.primary }]}
-                            dropDownContainerStyle={{ backgroundColor: themeColors.background, borderColor: themeColors.primary }}
-                            selectedItemContainerStyle={{ backgroundColor: themeColors.secondary }}
-                            ArrowDownIconComponent={CustomArrowDownIcon}
-                            ArrowUpIconComponent={CustomArrowUpIcon}
-                            TickIconComponent={CustomTickIcon}
-                            textStyle={{ color: themeColors.primary }}
-                        />
+                    <CardSwitch
+                        title="Offline"
+                        description="Enable offline mode to store country data."
+                        value={offline === "on"}
+                        onValueChange={toggleOffline}
+                    />
+
+                    <View style={[styles.lineSeparator]}>
+                        <Text style={[{ color: themeColors.primary }]}>
+                            _____________________________
+                        </Text>
                     </View>
-                )}
+
+                    {detection === "on" && (
+                        <View style={styles.inputRow}>
+                            <TextInput
+                                style={[
+                                    styles.textInput,
+                                    {
+                                        borderColor: themeColors.primary,
+                                        color: themeColors.text,
+                                        backgroundColor: themeColors.background,
+                                        flex: 1,
+                                    },
+                                ]}
+                                placeholder="Enter emergency number"
+                                placeholderTextColor={themeColors.text}
+                                value={emergencyPhoneNumber}
+                                onChangeText={setEmergencyPhoneNumber}
+                                keyboardType="number-pad"
+                            />
+                            <TouchableOpacity
+                                style={[
+                                    styles.saveButton2,
+                                    {
+                                        borderColor: themeColors.primary,
+                                        backgroundColor: themeColors.background,
+                                        marginLeft: 8, 
+                                    },
+                                ]}
+                                onPress={handleSaveNumber}
+                            >
+                                <Text
+                                    style={[
+                                        styles.saveButtonText2,
+                                        { color: themeColors.primary },
+                                    ]}
+                                >
+                                    Save
+                                </Text>
+                            </TouchableOpacity>
+                        </View>
+                    )}
+
+                    {offline === "on" && (
+                        <View>
+                            <TouchableOpacity
+                                style={[
+                                    styles.saveButton,
+                                    { borderColor: themeColors.primary, backgroundColor: themeColors.background },
+                                ]}
+                                onPress={handleSaveCountries}
+                            >
+                                <Text
+                                    style={[
+                                        styles.saveButtonText,
+                                        { color: themeColors.primary },
+                                    ]}
+                                >
+                                    Save Countries
+                                </Text>
+                            </TouchableOpacity>
+                            <DropDownPicker
+                                open={open}
+                                setOpen={setOpen}
+                                value={selectedCountries}
+                                setValue={setSelectedCountries}
+                                items={dropdownItems}
+                                setItems={setDropdownItems}
+                                multiple={true}
+                                placeholder="Select countries"
+                                style={[styles.dropdown, { backgroundColor: themeColors.background, borderColor: themeColors.primary }]}
+                                dropDownContainerStyle={{ backgroundColor: themeColors.background, borderColor: themeColors.primary }}
+                                selectedItemContainerStyle={{ backgroundColor: themeColors.secondary }}
+                                ArrowDownIconComponent={CustomArrowDownIcon}
+                                ArrowUpIconComponent={CustomArrowUpIcon}
+                                TickIconComponent={CustomTickIcon}
+                                textStyle={{ color: themeColors.primary }}
+                            />
+                        </View>
+                    )}
+                </ScrollView>
             </View>
         </View>
     );
@@ -200,6 +284,37 @@ const styles = StyleSheet.create({
         justifyContent: "center",
     },
     saveButtonText: {
+        fontSize: 16,
+        fontWeight: "bold",
+    },
+    lineSeparator: {
+        alignItems: "center"
+    },
+    textInput: {
+        borderWidth: 1,
+        borderRadius: 8,
+        paddingHorizontal: 8,
+        paddingVertical: 12,
+        fontSize: 16,
+    },
+    scrollContent: {
+        flexGrow: 1,
+        paddingBottom: 20,
+    },
+    inputRow: {
+        flexDirection: "row", 
+        alignItems: "center",
+        marginTop: 16,
+    },
+    saveButton2: {
+        paddingHorizontal: 16,
+        paddingVertical: 12,
+        borderRadius: 8,
+        borderWidth: 1,
+        alignItems: "center",
+        justifyContent: "center",
+    },
+    saveButtonText2: {
         fontSize: 16,
         fontWeight: "bold",
     },
