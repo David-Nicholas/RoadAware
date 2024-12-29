@@ -1,5 +1,5 @@
 import React, { useContext, useState, useEffect } from "react";
-import { View, StyleSheet, Text, TouchableOpacity, Button, TextInput, ScrollView } from "react-native";
+import { View, StyleSheet, Text, TouchableOpacity, Button, TextInput, ScrollView, Alert } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import CardSwitch from "../components/CardSwitch";
@@ -85,7 +85,7 @@ export default function Settings() {
     const handleSaveCountries = async () => {
         try {
             await AsyncStorage.setItem("selectedCountriesList", JSON.stringify(selectedCountries));
-            alert("Countries saved!");
+            Alert.alert("Success", "Countries saved!");
             console.log("Selected countries:", selectedCountries);
 
             const countriesParam = encodeURIComponent(JSON.stringify(selectedCountries));
@@ -98,7 +98,7 @@ export default function Settings() {
 
             await AsyncStorage.setItem("selectedCountriesInformations", JSON.stringify(countryInfo, null));
 
-            alert("Country information saved!");
+            Alert.alert("Success", "Country information saved!");
 
             const url = `${API_CURRENCY}?apiKey=${API_KEY}&base=EUR&resolution=1m&amount=1&places=6&format=json`;
             const responseCurrency = await fetch(url, { method: "GET" });
@@ -108,20 +108,20 @@ export default function Settings() {
 
             const currencyData = await responseCurrency.json();
             await AsyncStorage.setItem("currencyRates", JSON.stringify(currencyData.rates));
-            alert("Currency rates saved!");
+            Alert.alert("Success", "Currency rates saved!");
         } catch (error) {
             console.error("Failed to save countries, fetch country info, or fetch currency conversion rates:", error);
-            alert("Failed to save countries, fetch information, or fetch currency rates.");
+            Alert.alert("Error", "Failed to save countries, fetch information, or fetch currency rates.");
         }
     };
 
     const handleSaveNumber = async () => {
         try {
             await AsyncStorage.setItem("EmergencyPhoneNumber", JSON.stringify(emergencyPhoneNumber));
-            alert("Emergency phone number saved!");
+            Alert.alert("Success", "Emergency phone number saved!");
         } catch (error) {
             console.error("Failed to save emergency phone number in storage: ", error);
-            alert("Failed to save emergency phone number in storage");
+            Alert.alert("Error", "Failed to save emergency phone number in storage.");
         }
     };
 

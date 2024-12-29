@@ -1,5 +1,5 @@
 import React, { useContext, useEffect, useState } from "react";
-import { View, StyleSheet, Text, TextInput, ActivityIndicator, Alert } from "react-native";
+import { View, StyleSheet, Text, TextInput, ActivityIndicator } from "react-native";
 import { useRouter } from "expo-router";
 import { ThemeContext } from "../context/ThemeContext";
 import Colors from "../constants/Colors";
