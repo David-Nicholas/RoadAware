@@ -37,7 +37,6 @@ export const AccidentDetectionProvider = ({ children }: { children: ReactNode })
   };
 
   useEffect(() => {
-    // Only detect accidents if detection is "on"
     if (isFocused && detection === "on") {
       const subscription = Accelerometer.addListener((data) => {
         setAcceleration(data);
